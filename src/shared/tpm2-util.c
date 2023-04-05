@@ -10,7 +10,6 @@
 #include "creds-util.h"
 #include "cryptsetup-util.h"
 #include "dirent-util.h"
-#include "dlfcn-util.h"
 #include "efi-api.h"
 #include "extract-word.h"
 #include "fd-util.h"
@@ -47,9 +46,15 @@
 #endif
 
 #if HAVE_TPM2
+#ifdef STATIC_TPM2
+#include <tss2/tss2_tctildr.h>
+#include "static-util.h"
+#else
+#include "dlfcn-util.h"
 static void *libtss2_esys_dl = NULL;
 static void *libtss2_rc_dl = NULL;
 static void *libtss2_mu_dl = NULL;
+#endif
 
 static DLSYM_PROTOTYPE(Esys_Create) = NULL;
 static DLSYM_PROTOTYPE(Esys_CreateLoaded) = NULL;
@@ -116,6 +121,52 @@ static DLSYM_PROTOTYPE(Tss2_MU_UINT32_Marshal) = NULL;
 static DLSYM_PROTOTYPE(Tss2_RC_Decode) = NULL;
 
 static int dlopen_tpm2_esys(void) {
+#ifdef STATIC_TPM2
+        STATIC_SYM_ARG(Esys_Create);
+        STATIC_SYM_ARG(Esys_CreateLoaded);
+        STATIC_SYM_ARG(Esys_CreatePrimary);
+        STATIC_SYM_ARG(Esys_EvictControl);
+        STATIC_SYM_ARG(Esys_Finalize);
+        STATIC_SYM_ARG(Esys_FlushContext);
+        STATIC_SYM_ARG(Esys_Free);
+        STATIC_SYM_ARG(Esys_GetCapability);
+        STATIC_SYM_ARG(Esys_GetRandom);
+        STATIC_SYM_ARG(Esys_Import);
+        STATIC_SYM_ARG(Esys_Initialize);
+        STATIC_SYM_ARG(Esys_Load);
+        STATIC_SYM_ARG(Esys_LoadExternal);
+        STATIC_SYM_ARG(Esys_NV_DefineSpace);
+        STATIC_SYM_ARG(Esys_NV_UndefineSpace);
+        STATIC_SYM_ARG(Esys_NV_Write);
+        STATIC_SYM_ARG(Esys_PCR_Extend);
+        STATIC_SYM_ARG(Esys_PCR_Read);
+        STATIC_SYM_ARG(Esys_PolicyAuthValue);
+        STATIC_SYM_ARG(Esys_PolicyAuthorize);
+        STATIC_SYM_ARG(Esys_PolicyAuthorizeNV);
+        STATIC_SYM_ARG(Esys_PolicyGetDigest);
+        STATIC_SYM_ARG(Esys_PolicyOR);
+        STATIC_SYM_ARG(Esys_PolicyPCR);
+        STATIC_SYM_ARG(Esys_PolicySigned);
+        STATIC_SYM_ARG(Esys_ReadPublic);
+        STATIC_SYM_ARG(Esys_StartAuthSession);
+        STATIC_SYM_ARG(Esys_Startup);
+        STATIC_SYM_ARG(Esys_TestParms);
+        STATIC_SYM_ARG(Esys_TR_Close);
+        STATIC_SYM_ARG(Esys_TR_Deserialize);
+        STATIC_SYM_ARG(Esys_TR_FromTPMPublic);
+        STATIC_SYM_ARG(Esys_TR_GetName);
+        STATIC_SYM_ARG(Esys_TR_Serialize);
+        STATIC_SYM_ARG(Esys_TR_SetAuth);
+        STATIC_SYM_ARG(Esys_TRSess_GetAttributes);
+        STATIC_SYM_ARG(Esys_TRSess_GetNonceTPM);
+        STATIC_SYM_ARG(Esys_TRSess_SetAttributes);
+        STATIC_SYM_ARG(Esys_Unseal);
+        STATIC_SYM_ARG(Esys_VerifySignature);
+
+        STATIC_SYM_ARG(Esys_TR_GetTpmHandle);
+
+        return 0;
+#else
         int r;
 
         ELF_NOTE_DLOPEN("tpm",
@@ -175,9 +226,14 @@ static int dlopen_tpm2_esys(void) {
                 log_debug("libtss2-esys too old, does not include Esys_TR_GetTpmHandle.");
 
         return 0;
+#endif
 }
 
 static int dlopen_tpm2_rc(void) {
+#ifdef STATIC_TPM2
+        STATIC_SYM_ARG(Tss2_RC_Decode);
+        return 0;
+#else
         ELF_NOTE_DLOPEN("tpm",
                         "Support for TPM",
                         ELF_NOTE_DLOPEN_PRIORITY_SUGGESTED,
@@ -186,9 +242,33 @@ static int dlopen_tpm2_rc(void) {
         return dlopen_many_sym_or_warn(
                         &libtss2_rc_dl, "libtss2-rc.so.0", LOG_DEBUG,
                         DLSYM_ARG(Tss2_RC_Decode));
+#endif
 }
 
 static int dlopen_tpm2_mu(void) {
+#ifdef STATIC_TPM2
+        STATIC_SYM_ARG(Tss2_MU_TPM2_CC_Marshal);
+        STATIC_SYM_ARG(Tss2_MU_TPM2_HANDLE_Marshal);
+        STATIC_SYM_ARG(Tss2_MU_TPM2B_DIGEST_Marshal);
+        STATIC_SYM_ARG(Tss2_MU_TPM2B_ENCRYPTED_SECRET_Marshal);
+        STATIC_SYM_ARG(Tss2_MU_TPM2B_ENCRYPTED_SECRET_Unmarshal);
+        STATIC_SYM_ARG(Tss2_MU_TPM2B_NAME_Marshal);
+        STATIC_SYM_ARG(Tss2_MU_TPM2B_PRIVATE_Marshal);
+        STATIC_SYM_ARG(Tss2_MU_TPM2B_PRIVATE_Unmarshal);
+        STATIC_SYM_ARG(Tss2_MU_TPM2B_PUBLIC_Marshal);
+        STATIC_SYM_ARG(Tss2_MU_TPM2B_PUBLIC_Unmarshal);
+        STATIC_SYM_ARG(Tss2_MU_TPM2B_SENSITIVE_Marshal);
+        STATIC_SYM_ARG(Tss2_MU_TPML_PCR_SELECTION_Marshal);
+        STATIC_SYM_ARG(Tss2_MU_TPMS_NV_PUBLIC_Marshal);
+        STATIC_SYM_ARG(Tss2_MU_TPM2B_NV_PUBLIC_Marshal);
+        STATIC_SYM_ARG(Tss2_MU_TPM2B_NV_PUBLIC_Unmarshal);
+        STATIC_SYM_ARG(Tss2_MU_TPMS_ECC_POINT_Marshal);
+        STATIC_SYM_ARG(Tss2_MU_TPMT_HA_Marshal);
+        STATIC_SYM_ARG(Tss2_MU_TPMT_PUBLIC_Marshal);
+        STATIC_SYM_ARG(Tss2_MU_UINT32_Marshal);
+
+        return 0;
+#else
         ELF_NOTE_DLOPEN("tpm",
                         "Support for TPM",
                         ELF_NOTE_DLOPEN_PRIORITY_SUGGESTED,
@@ -215,6 +295,7 @@ static int dlopen_tpm2_mu(void) {
                         DLSYM_ARG(Tss2_MU_TPMT_HA_Marshal),
                         DLSYM_ARG(Tss2_MU_TPMT_PUBLIC_Marshal),
                         DLSYM_ARG(Tss2_MU_UINT32_Marshal));
+#endif
 }
 
 int dlopen_tpm2(void) {
@@ -648,7 +729,9 @@ static Tpm2Context *tpm2_context_free(Tpm2Context *c) {
                 sym_Esys_Finalize(&c->esys_context);
 
         c->tcti_context = mfree(c->tcti_context);
+#ifndef STATIC_TPM2
         c->tcti_dl = safe_dlclose(c->tcti_dl);
+#endif
 
         c->capability_algorithms = mfree(c->capability_algorithms);
         c->capability_commands = mfree(c->capability_commands);
@@ -700,9 +783,11 @@ int tpm2_context_new(const char *device, Tpm2Context **ret_context) {
 
         if (device) {
                 const char *param, *driver, *fn;
+#ifndef STATIC_TPM2
                 const TSS2_TCTI_INFO* info;
                 TSS2_TCTI_INFO_FUNC func;
                 size_t sz = 0;
+#endif
 
                 param = strchr(device, ':');
                 if (param) {
@@ -722,7 +807,9 @@ int tpm2_context_new(const char *device, Tpm2Context **ret_context) {
                 log_debug("Using TPM2 TCTI driver '%s' with device '%s'.", driver, param);
 
                 fn = strjoina("libtss2-tcti-", driver, ".so.0");
-
+#ifdef STATIC_TPM2
+                rc = Tss2_TctiLdr_Initialize(fn, &context->tcti_context);
+#else
                 /* Better safe than sorry, let's refuse strings that cannot possibly be valid driver early, before going to disk. */
                 if (!filename_is_valid(fn))
                         return log_debug_errno(SYNTHETIC_ERRNO(EINVAL), "TPM2 driver name '%s' not valid, refusing.", driver);
@@ -755,6 +842,7 @@ int tpm2_context_new(const char *device, Tpm2Context **ret_context) {
                         return log_oom_debug();
 
                 rc = info->init(context->tcti_context, &sz, param);
+#endif
                 if (rc != TPM2_RC_SUCCESS)
                         return log_debug_errno(SYNTHETIC_ERRNO(ENOTRECOVERABLE),
                                                "Failed to initialize TCTI context: %s", sym_Tss2_RC_Decode(rc));

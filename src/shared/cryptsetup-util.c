@@ -6,14 +6,18 @@
 
 #include "alloc-util.h"
 #include "cryptsetup-util.h"
-#include "dlfcn-util.h"
 #include "log.h"
 #include "parse-util.h"
 #include "string-util.h"
 #include "strv.h"
 
 #if HAVE_LIBCRYPTSETUP
+#ifdef STATIC_LIBCRYPTSETUP
+#include "static-util.h"
+#else
+#include "dlfcn-util.h"
 static void *cryptsetup_dl = NULL;
+#endif
 
 DLSYM_PROTOTYPE(crypt_activate_by_passphrase) = NULL;
 #if HAVE_CRYPT_ACTIVATE_BY_SIGNED_KEY
@@ -224,6 +228,70 @@ int dlopen_cryptsetup(void) {
 #if HAVE_LIBCRYPTSETUP
         int r;
 
+#ifdef STATIC_LIBCRYPTSETUP
+        if (sym_crypt_activate_by_passphrase)
+            return 1;
+        STATIC_SYM_ARG(crypt_activate_by_passphrase);
+#if HAVE_CRYPT_ACTIVATE_BY_SIGNED_KEY
+        STATIC_SYM_ARG(crypt_activate_by_signed_key);
+#endif
+        STATIC_SYM_ARG(crypt_activate_by_volume_key);
+        STATIC_SYM_ARG(crypt_deactivate_by_name);
+        STATIC_SYM_ARG(crypt_format);
+        STATIC_SYM_ARG(crypt_free);
+        STATIC_SYM_ARG(crypt_get_cipher);
+        STATIC_SYM_ARG(crypt_get_cipher_mode);
+        STATIC_SYM_ARG(crypt_get_data_offset);
+        STATIC_SYM_ARG(crypt_get_device_name);
+        STATIC_SYM_ARG(crypt_get_dir);
+        STATIC_SYM_ARG(crypt_get_type);
+        STATIC_SYM_ARG(crypt_get_uuid);
+        STATIC_SYM_ARG(crypt_get_verity_info);
+        STATIC_SYM_ARG(crypt_get_volume_key_size);
+        STATIC_SYM_ARG(crypt_init);
+        STATIC_SYM_ARG(crypt_init_by_name);
+        STATIC_SYM_ARG(crypt_keyslot_add_by_volume_key);
+        STATIC_SYM_ARG(crypt_keyslot_destroy);
+        STATIC_SYM_ARG(crypt_keyslot_max);
+        STATIC_SYM_ARG(crypt_load);
+        STATIC_SYM_ARG(crypt_resize);
+#if HAVE_CRYPT_RESUME_BY_VOLUME_KEY
+        STATIC_SYM_ARG(crypt_resume_by_volume_key);
+#endif
+        STATIC_SYM_ARG(crypt_set_data_device);
+        STATIC_SYM_ARG(crypt_set_debug_level);
+        STATIC_SYM_ARG(crypt_set_log_callback);
+#if HAVE_CRYPT_SET_METADATA_SIZE
+        STATIC_SYM_ARG(crypt_set_metadata_size);
+#endif
+        STATIC_SYM_ARG(crypt_set_pbkdf_type);
+        STATIC_SYM_ARG(crypt_suspend);
+        STATIC_SYM_ARG(crypt_token_json_get);
+        STATIC_SYM_ARG(crypt_token_json_set);
+#if HAVE_CRYPT_TOKEN_MAX
+        STATIC_SYM_ARG(crypt_token_max);
+#endif
+#if HAVE_CRYPT_TOKEN_SET_EXTERNAL_PATH
+        STATIC_SYM_ARG(crypt_token_set_external_path);
+#endif
+        STATIC_SYM_ARG(crypt_token_status);
+        STATIC_SYM_ARG(crypt_volume_key_get);
+#if HAVE_CRYPT_REENCRYPT_INIT_BY_PASSPHRASE
+        STATIC_SYM_ARG(crypt_reencrypt_init_by_passphrase);
+#endif
+#if HAVE_CRYPT_REENCRYPT_RUN
+        STATIC_SYM_ARG(crypt_reencrypt_run);
+#elif HAVE_CRYPT_REENCRYPT
+        STATIC_SYM_ARG(crypt_reencrypt);
+#endif
+        STATIC_SYM_ARG(crypt_metadata_locking);
+#if HAVE_CRYPT_SET_DATA_OFFSET
+        STATIC_SYM_ARG(crypt_set_data_offset);
+#endif
+        STATIC_SYM_ARG(crypt_header_restore);
+        STATIC_SYM_ARG(crypt_volume_key_keyring);
+
+#else /* STATIC_LIBCRYPTSETUP */
         /* libcryptsetup added crypt_reencrypt() in 2.2.0, and marked it obsolete in 2.4.0, replacing it with
          * crypt_reencrypt_run(), which takes one extra argument but is otherwise identical. The old call is
          * still available though, and given we want to support 2.2.0 for a while longer, we'll use the old
@@ -297,6 +365,7 @@ int dlopen_cryptsetup(void) {
                         DLSYM_ARG(crypt_volume_key_keyring));
         if (r <= 0)
                 return r;
+#endif
 
         /* Redirect the default logging calls of libcryptsetup to our own logging infra. (Note that
          * libcryptsetup also maintains per-"struct crypt_device" log functions, which we'll also set

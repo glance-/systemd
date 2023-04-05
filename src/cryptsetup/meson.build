@@ -33,3 +33,21 @@ executables += [
 install_symlink('systemd-cryptsetup',
                 pointing_to : libexecdir_to_bin / 'systemd-cryptsetup',
                 install_dir : libexecdir)
+
+if have_static_binaries
+        executables += [
+                executable_template + {
+                        'name' : 'systemd-cryptsetup.static',
+                        'public' : true,
+                        'conditions' : ['HAVE_LIBCRYPTSETUP'],
+                        'sources' : systemd_cryptsetup_sources,
+                        'link_args' : ['-static'],
+                        'link_with' : [libshared_static_static_libs, libsystemd_static, libbasic_static],
+                        'dependencies' : [
+                                libcryptsetup_static,
+                                tpm2_static,
+                                libp11kit_cflags,
+                        ],
+                }
+        ]
+endif
