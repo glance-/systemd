@@ -34,6 +34,25 @@ executables += [
         },
 ]
 
+if have_static_binaries
+        executables += [
+                executable_template + {
+                        'name' : 'systemd-cryptsetup.static',
+                        'public' : true,
+                        'conditions' : ['HAVE_LIBCRYPTSETUP'],
+                        'sources' : systemd_cryptsetup_sources,
+                        'link_args' : ['-static'],
+                        'link_with' : [libshared_static_static_libs, libsystemd_static, libbasic],
+                        'dependencies' : [
+                                libcryptsetup_static,
+                                tpm2_static,
+                                libp11kit
+                        ],
+                }
+        ]
+endif
+
+
 if conf.get('HAVE_LIBCRYPTSETUP') == 1
         # symlink for backwards compatibility after rename
         meson.add_install_script(sh, '-c',
