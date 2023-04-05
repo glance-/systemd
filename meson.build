@@ -85,6 +85,7 @@ conf.set10('HAVE_SPLIT_BIN', split_bin,
            description : 'bin and sbin directories are separate')
 
 have_standalone_binaries = get_option('standalone-binaries')
+have_static_binaries = get_option('static-binaries')
 
 sysvinit_path = get_option('sysvinit-path')
 sysvrcnd_path = get_option('sysvrcnd-path')
@@ -416,7 +417,7 @@ endif
 # --as-needed and --no-undefined are provided by meson by default,
 # run 'meson configure' to see what is enabled
 possible_link_flags = [
-        '-Wl,--fatal-warnings',
+#        '-Wl,--fatal-warnings',
         '-Wl,-z,now',
         '-Wl,-z,relro',
 ]
@@ -1239,6 +1240,11 @@ libcryptsetup = dependency('libcryptsetup',
                            version : libcryptsetup_plugins.enabled() ? '>= 2.4.0' : '>= 2.0.1',
                            required : libcryptsetup)
 
+libcryptsetup_static = dependency('libcryptsetup',
+                           static: true,
+                           version : '>= 2.0.1',
+                           required : get_option('libcryptsetup').enabled() and have_static_binaries)
+
 have = libcryptsetup.found()
 foreach ident : ['crypt_set_metadata_size',
                  'crypt_activate_by_signed_key',
@@ -1340,6 +1346,11 @@ conf.set10('HAVE_LIBFIDO2', libfido2.found())
 
 tpm2 = dependency('tss2-esys tss2-rc tss2-mu tss2-tcti-device',
                   required : get_option('tpm2'))
+
+tpm2_static = dependency('tss2-esys tss2-rc tss2-mu tss2-tctildr tss2-tcti-device',
+                         static: true,
+                         required : get_option('tpm2').enabled() and have_static_binaries == 'true')
+
 conf.set10('HAVE_TPM2', tpm2.found())
 conf.set10('HAVE_TSS2_ESYS3', tpm2.found() and tpm2.version().version_compare('>= 3.0.0'))
 
@@ -2852,6 +2863,7 @@ foreach tuple : [
         ['first-boot-full-preset'],
         ['fexecve'],
         ['standalone-binaries',    get_option('standalone-binaries')],
+        ['static-binaries',        get_option('static-binaries')],
         ['coverage',               get_option('b_coverage')],
 ]
 
