@@ -273,6 +273,7 @@ libshared_deps = [threads,
                   libblkid,
                   libcap,
                   libcrypt,
+                  libcryptsetup,
                   libdl,
                   libgcrypt,
                   libiptc,
@@ -299,6 +300,20 @@ libshared_static = static_library(
         dependencies : libshared_deps,
         c_args : ['-fvisibility=default'],
         build_by_default : false)
+
+if have_static_binaries
+        libshared_static_static_libs = static_library(
+                'systemd-shared-static-libs',
+                shared_sources,
+                include_directories : includes,
+                dependencies : [
+                  libdl,
+                  libcryptsetup,
+                  libmount.partial_dependency(includes: true, compile_args: true),
+                ],
+                c_args : ['-fvisibility=default', '-DSTATIC_LIBCRYPTSETUP', '-DSTATIC_TPM2'],
+                build_by_default : true)
+endif
 
 libshared = shared_library(
         libshared_name,
