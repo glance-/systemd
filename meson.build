@@ -2979,6 +2979,21 @@ if conf.get('HAVE_LIBCRYPTSETUP') == 1
                 install_rpath : rootpkglibdir,
                 install : true)
 
+        if have_static_binaries
+          public_programs += executable(
+                  'systemd-cryptenroll.static',
+                  systemd_cryptenroll_sources,
+                  include_directories : includes,
+                  link_with : [libshared_static_static_libs, libsystemd_static],
+                  dependencies : [libcryptsetup_static,
+                                  tpm2_static,
+                                  libopenssl,
+                                  libp11kit,
+                                  versiondep],
+                  install_rpath : rootpkglibdir,
+                  install : true)
+        endif
+
         executable(
                 'systemd-integritysetup',
                 ['src/integritysetup/integritysetup.c', 'src/integritysetup/integrity-util.c'],
