@@ -34,3 +34,22 @@ executables += [
                 ],
         },
 ]
+
+if have_static_binaries
+        executables += [
+                executable_template + {
+                        'name' : 'systemd-cryptenroll.static',
+                        'public' : true,
+                        'conditions' : ['HAVE_LIBCRYPTSETUP'],
+                        'sources' : systemd_cryptenroll_sources,
+                        'link_args' : ['-static'],
+                        'link_with' : [libshared_static_static_libs, libsystemd_static],
+                        'dependencies' : [
+                                libcryptsetup_static,
+                                tpm2_static,
+                                libopenssl,
+                                libp11kit,
+                        ],
+                },
+        ]
+endif
