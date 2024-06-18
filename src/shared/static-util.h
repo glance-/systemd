@@ -5,4 +5,4 @@
  * that each library symbol to resolve will be placed in a variable with the "sym_" prefix, i.e. a symbol
  * "foobar" is loaded into a variable "sym_foobar". */
 #define STATIC_SYM_ARG(arg) \
-        ({ assert_cc(__builtin_types_compatible_p(typeof(sym_##arg), typeof(&arg))); sym_##arg; }) = arg
+        ({ assert_cc(__builtin_types_compatible_p(typeof(sym_##arg), typeof(&arg))); sym_##arg = arg ;})
