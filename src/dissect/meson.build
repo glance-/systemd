@@ -16,3 +16,18 @@ install_emptydir(sbindir)
 meson.add_install_script(sh, '-c',
                          ln_s.format(bindir / 'systemd-dissect',
                                      sbindir / 'mount.ddi'))
+
+if have_static_binaries
+        executables += [
+                executable_template + {
+                        'name' : 'systemd-dissect.static',
+                        'public' : true,
+                        'sources' : files('dissect.c'),
+                        'link_args' : ['-static'],
+                        'link_with' : [libshared_static_static_libs, libsystemd_static, libbasic_static],
+                        'dependencies' : [
+                                libmount,
+                        ],
+                }
+        ]
+endif
