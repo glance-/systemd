@@ -7,6 +7,10 @@
 
 #include <blkid.h>
 
+#ifdef STATIC_BLKID
+#include "static-util.h"
+#endif
+
 #include "dlfcn-util.h"
 
 extern DLSYM_PROTOTYPE(blkid_do_fullprobe);

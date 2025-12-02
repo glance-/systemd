@@ -9,7 +9,9 @@
 #include "string-util.h"
 
 #if HAVE_BLKID
+#ifndef STATIC_BLKID
 static void *libblkid_dl = NULL;
+#endif
 
 DLSYM_PROTOTYPE(blkid_do_fullprobe) = NULL;
 DLSYM_PROTOTYPE(blkid_do_probe) = NULL;
@@ -49,6 +51,47 @@ DLSYM_PROTOTYPE(blkid_probe_set_superblocks_flags) = NULL;
 DLSYM_PROTOTYPE(blkid_safe_string) = NULL;
 
 int dlopen_libblkid(void) {
+#ifdef STATIC_BLKID
+        STATIC_SYM_ARG(blkid_do_fullprobe);
+        STATIC_SYM_ARG(blkid_do_probe);
+        STATIC_SYM_ARG(blkid_do_safeprobe);
+        STATIC_SYM_ARG(blkid_do_wipe);
+        STATIC_SYM_ARG(blkid_encode_string);
+        STATIC_SYM_ARG(blkid_free_probe);
+        STATIC_SYM_ARG(blkid_new_probe);
+        STATIC_SYM_ARG(blkid_new_probe_from_filename);
+        STATIC_SYM_ARG(blkid_partition_get_flags);
+        STATIC_SYM_ARG(blkid_partition_get_name);
+        STATIC_SYM_ARG(blkid_partition_get_partno);
+        STATIC_SYM_ARG(blkid_partition_get_size);
+        STATIC_SYM_ARG(blkid_partition_get_start);
+        STATIC_SYM_ARG(blkid_partition_get_type);
+        STATIC_SYM_ARG(blkid_partition_get_type_string);
+        STATIC_SYM_ARG(blkid_partition_get_uuid);
+        STATIC_SYM_ARG(blkid_partlist_devno_to_partition);
+        STATIC_SYM_ARG(blkid_partlist_get_partition);
+        STATIC_SYM_ARG(blkid_partlist_numof_partitions);
+        STATIC_SYM_ARG(blkid_probe_enable_partitions);
+        STATIC_SYM_ARG(blkid_probe_enable_superblocks);
+        STATIC_SYM_ARG(blkid_probe_filter_superblocks_type);
+        STATIC_SYM_ARG(blkid_probe_filter_superblocks_usage);
+        STATIC_SYM_ARG(blkid_probe_get_fd);
+        STATIC_SYM_ARG(blkid_probe_get_partitions);
+        STATIC_SYM_ARG(blkid_probe_get_size);
+        STATIC_SYM_ARG(blkid_probe_get_value);
+        STATIC_SYM_ARG(blkid_probe_is_wholedisk);
+        STATIC_SYM_ARG(blkid_probe_lookup_value);
+        STATIC_SYM_ARG(blkid_probe_numof_values);
+        STATIC_SYM_ARG(blkid_probe_set_device);
+        STATIC_SYM_ARG(blkid_probe_set_hint);
+        STATIC_SYM_ARG(blkid_probe_set_partitions_flags);
+        STATIC_SYM_ARG(blkid_probe_set_sectorsize);
+        STATIC_SYM_ARG(blkid_probe_set_superblocks_flags);
+        STATIC_SYM_ARG(blkid_safe_string);
+
+        return 0;
+#else
+
         ELF_NOTE_DLOPEN("blkid",
                         "Support for block device identification",
                         ELF_NOTE_DLOPEN_PRIORITY_RECOMMENDED,
@@ -94,6 +137,7 @@ int dlopen_libblkid(void) {
                         DLSYM_ARG(blkid_probe_set_sectorsize),
                         DLSYM_ARG(blkid_probe_set_superblocks_flags),
                         DLSYM_ARG(blkid_safe_string));
+#endif
 }
 
 int blkid_partition_get_uuid_id128(blkid_partition p, sd_id128_t *ret) {

@@ -416,7 +416,7 @@ if have_static_binaries
                   libmount.partial_dependency(includes: true, compile_args: true),
                   userspace,
                 ],
-                c_args : ['-fvisibility=default', '-DSTATIC_LIBCRYPTSETUP', '-DSTATIC_TPM2'],
+                c_args : ['-fvisibility=default', '-DSTATIC_LIBCRYPTSETUP', '-DSTATIC_TPM2', '-DSTATIC_BLKID'],
                 build_by_default : true)
 endif
 
